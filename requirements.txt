@@ -1,0 +1,10 @@
+numpy
+keras
+tensorflow
+scikit-learn
+gensim
+scipy==1.12
+nltk
+pydot==1.2.3
+seaborn
+matplotlib
