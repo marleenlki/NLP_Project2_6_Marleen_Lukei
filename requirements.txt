@@ -8,3 +8,8 @@ nltk
 pydot==1.2.3
 seaborn
 matplotlib
+spacy
+nltk
+fasttext
+evaluate
+tabulate

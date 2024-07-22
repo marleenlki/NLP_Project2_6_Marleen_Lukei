@@ -1,50 +1,86 @@
 import re
-import numpy as np
+import unicodedata
+import tensorflow as tf
 from tensorflow.keras.preprocessing.text import Tokenizer  
 from tensorflow.keras.preprocessing.sequence import pad_sequences  
 
-def apply_preprocessing_pipeline(english_sentences,portuguese_sentences):  
-    # Lowercase the text  
-    portuguese_sentences = [sentence.lower() for sentence in portuguese_sentences]  
-    english_sentences = [sentence.lower() for sentence in english_sentences]
-    # Remove special characters and numbers
-    #portuguese_sentences = [re.sub(r'[^a-zà-ú\s]', '', sentence) for sentence in portuguese_sentences] 
-    #english_sentences = [re.sub(r'[^a-z\s]', '', sentence) for sentence in english_sentences]
-    # Remove sentences that start with <
-    portuguese_sentences, english_sentences = zip(*[(pt, en) for pt, en in zip(portuguese_sentences, english_sentences) if not pt.startswith('<') and not en.startswith('<')]) 
-    # Strip empty lines 
-    portuguese_sentences, english_sentences = zip(*[(pt, en) for pt, en in zip(portuguese_sentences, english_sentences) if pt.strip() and en.strip()])  
-    # Convert tuples back to lists  
-    portuguese_sentences = list(portuguese_sentences)  
-    english_sentences = list(english_sentences)  
-    # Remove \n from the end of each sentence
-    portuguese_sentences = [line.rstrip('\n') for line in portuguese_sentences]
-    english_sentences = [line.rstrip('\n') for line in english_sentences]
+
+def remove_duplicate_translations(english_sentences, portuguese_sentences):
+    """Removes duplicate translations from parallel lists of sentences."""
+    unique_translations = dict()
+    for en, pt in zip(english_sentences, portuguese_sentences):
+        if en not in unique_translations and pt not in unique_translations.values():
+            unique_translations[en] = pt
+    return list(unique_translations.keys()), list(unique_translations.values())
+
+def remove_parentheses_content(text):
+  """Removes text enclosed in parentheses from a string."""
+  cleaned_text = re.sub(r'\([^)]*\)', '', text)
+  return cleaned_text
+
+def normalize_string(s):
+    """Normalizes a string by lowercasing, removing diacritics, removing punctuation and removing non-alphanumeric characters.
+    """
+    s = s.lower()
+    # Split accented characters.
+    s = unicodedata.normalize('NFKD', s)
+    # Keep space, a to z
+    s = re.sub(r"[^ a-z\s]+", r"", s) 
+    s = re.sub(r'\s\s+', ' ', s).strip() # Remove multiple spaces
+    return s.strip()
+
+def apply_preprocessing_pipeline(english_sentences, portuguese_sentences):
+    """Applies a preprocessing pipeline to English and Portuguese sentences."""
+        # Split sentences  
+
+    cleaned_english = []
+    cleaned_portuguese = []
     
-    return english_sentences,portuguese_sentences
+
+    for en_sent, pt_sent in zip(english_sentences, portuguese_sentences):
+        # Remove sentences starting with '<'
+        if en_sent.startswith('<') or pt_sent.startswith('<'):
+            continue
+        
+        # Remove parentheses content
+        en_sent = remove_parentheses_content(en_sent)
+        pt_sent = remove_parentheses_content(pt_sent)
+        
+        # Normalize strings
+        en_sent = normalize_string(en_sent)
+        pt_sent = normalize_string(pt_sent)
+
+
+        # Skip empty lines
+        if en_sent.strip() and pt_sent.strip():
+            cleaned_english.append(en_sent)
+            cleaned_portuguese.append(pt_sent)
+      
+   
+    # Remove duplicate translations
+    cleaned_english, cleaned_portuguese = remove_duplicate_translations(cleaned_english, cleaned_portuguese)
+    return cleaned_english, cleaned_portuguese
 
 def tokenize(sentences, tokenizer=None ,decode=False):  
     if not tokenizer:  
         if decode:
-            data = sentences + ['<start> <end>']
             tokenizer = Tokenizer(
                               filters = '',
-                              num_words = 20000,
-         
-                            )  
+                              oov_token="[UNK]"
+                            ) 
+            tokenizer.fit_on_texts(sentences+ ['<start>', '<end>']) 
         else:
-            data = sentences
-            tokenizer = Tokenizer(num_words = 20000,)  
-        tokenizer.fit_on_texts(data)  
+            tokenizer = Tokenizer(oov_token="[UNK]",filters = '')  
+            tokenizer.fit_on_texts(sentences)  
     # integer encode the sentences
     sequences = tokenizer.texts_to_sequences(sentences)
     return sequences, tokenizer
 
 def pad(sequences, max_len=None):
-    if not max_len:
-        max_len = max(len(seq) for seq in sequences)
+
     # pad sequences to get the same length
-    padded_sequences = pad_sequences(sequences, maxlen=max_len, padding='post') #where to truncate the sentence 
-    return padded_sequences, max_len
+    padded_sequences = pad_sequences(sequences, maxlen=max_len, truncating ="post",padding='post') #where to truncate the sentence 
+    
+    return padded_sequences
 
 
