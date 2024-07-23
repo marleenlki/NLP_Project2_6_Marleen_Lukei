@@ -33,6 +33,37 @@ def load_glove_embeddings(language="english"):
 
     return embeddings_dictionary
 
+def load_char_embeddings(language="english"):
+    """Load Char model from file.
+
+    Args:
+        language (str): Language of the Char model. Defaults to "english".
+
+    Returns:
+        dict: Char model as a dictionary.
+
+    """
+    embeddings_dictionary = dict()
+    if language == "english":
+        char_file="embeddings\glove_eng_char.txt"
+        
+        with open(char_file, 'r', encoding='utf-8') as f:  
+            for line in f:  
+                values = line.split()  
+                word = values[0]  
+                vector_dimensions = asarray(values[1:], dtype='float32')
+                embeddings_dictionary[word] = vector_dimensions
+    else:
+        char_file="embeddings\glove_pt_char.txt"
+        with open(char_file, 'r', encoding='utf-8') as f:  
+            for line in f:  
+                values = line.split()  
+                word = values[0]  
+                vector_dimensions = asarray(values[1:], dtype='float32')
+                embeddings_dictionary[word] = vector_dimensions
+
+    return embeddings_dictionary
+
 # loaded from http://nilc.icmc.usp.br/embeddings and http://vectors.nlpl.eu/repository/
 def load_word2vec_embeddings(language="english"):
     """Load Word2Vec model from file.
