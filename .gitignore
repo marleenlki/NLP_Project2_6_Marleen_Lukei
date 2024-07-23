@@ -1,6 +1,5 @@
 env
 data
-embeddings
-models
+
 pycache
 __pycache__
