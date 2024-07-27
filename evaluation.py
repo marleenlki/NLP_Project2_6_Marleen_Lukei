@@ -8,11 +8,11 @@ import evaluate
 meteor = evaluate.load('meteor')
   
 
-def translate_sentence(input_seq, encoder_model, decoder_model, idx2word_target, pt_max_len,word2idx_outputs):
+def translate_sentence(input_seq, encoder_model, decoder_model, idx2word_target, pt_max_len,word2idx_outputs,starttoken='<start>',endtoken='<end>'):
     states_value = encoder_model.predict(input_seq)
     target_seq = np.zeros((1, 1))
-    target_seq[0, 0] = word2idx_outputs['<start>']
-    eos = word2idx_outputs['<end>']
+    target_seq[0, 0] = word2idx_outputs[starttoken]
+    eos = word2idx_outputs[endtoken]
     output_sentence = []
 
     for _ in range(pt_max_len):
@@ -34,7 +34,7 @@ def translate_sentence(input_seq, encoder_model, decoder_model, idx2word_target,
     return ' '.join(output_sentence)
 
 
-def translate_dataset(test_eng_seq, test_eng, test_pt, encoder_model, decoder_model, idx2word_target, pt_max_len, word2idx_outputs, save_interval=100, save_path='translations/translation_evaluation.csv'):
+def translate_dataset(test_eng_seq, test_eng, test_pt, encoder_model, decoder_model, idx2word_target, pt_max_len, word2idx_outputs, save_interval=100, save_path='translations/translation_evaluation.csv',starttoken='<start>',endtoken='<end>'):
     """
     Evaluates the translation for the entire test dataset and prepares a dataset with the source sentence, reference translation and generated translation.
     
@@ -49,6 +49,8 @@ def translate_dataset(test_eng_seq, test_eng, test_pt, encoder_model, decoder_mo
     - word2idx_outputs: Word-to-index mapping for the target language (Portuguese).
     - save_interval: Number of sentences after which to save the progress.
     - save_path: Path to the file where results will be saved.
+    - starttoken: Start token for the target language.
+    - endtoken: End token for the target language.
 
     Returns:
     - evaluation_df: A DataFrame containing source sentences, reference translations, and generated translations.
@@ -59,7 +61,7 @@ def translate_dataset(test_eng_seq, test_eng, test_pt, encoder_model, decoder_mo
     for i in tqdm(range(len(test_eng_seq)), desc="Translating sentences"):
         input_seq = test_eng_seq[i:i+1]
         # Translate the current sentence
-        translation = translate_sentence(input_seq, encoder_model, decoder_model, idx2word_target, pt_max_len, word2idx_outputs)
+        translation = translate_sentence(input_seq, encoder_model, decoder_model, idx2word_target, pt_max_len, word2idx_outputs,starttoken='<start>',endtoken='<end>')
 
         # Append the results
         translations.append({

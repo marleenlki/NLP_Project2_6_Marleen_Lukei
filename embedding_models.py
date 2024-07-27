@@ -33,6 +33,7 @@ def load_glove_embeddings(language="english"):
 
     return embeddings_dictionary
 
+# average of the char embeddings of the word from pre-trained GloVe embeddings
 def load_char_embeddings(language="english"):
     """Load Char model from file.
 
